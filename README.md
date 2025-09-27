@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>¿Te casarías conmigo?</title>
+  <style>
+    :root{ --red:#e63946; --bg:#fff; --text:#000 }
+    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    .stage{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;position:relative;overflow:hidden;
+    }
+    .card{
+      background:rgba(255,255,255,0.95);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.08);padding:36px;max-width:880px;width:100%;text-align:center;
+    }
+    h1{margin:0 0 12px;font-size:28px;color:var(--text);line-height:1.1}
+    p.lead{margin:0 0 22px;font-size:20px;color:var(--text)}
+    .proposal{font-weight:700;font-size:22px;margin:18px 0;color:var(--text)}
+    .question{font-size:36px;margin:20px 0;color:var(--text)}
+    .btns{display:flex;gap:12px;justify-content:center;margin-top:8px}
+    button{cursor:pointer;border:2px solid var(--text);background:transparent;padding:10px 18px;border-radius:999px;font-size:16px;font-weight:600}
+    button.primary{background:var(--red);color:#fff;border-color:var(--red)}
+
+    /* Hearts */
+    .heart{position:absolute;width:40px;height:40px;transform:translate(-50%,-50%) rotate(-45deg);}
+    .heart:before,.heart:after{content:"";position:absolute;width:40px;height:40px;border-radius:50%;background:var(--red)}
+    .heart:before{top:-20px;left:0}
+    .heart:after{left:20px;top:0}
+
+    /* make many hearts with animation using CSS variables */
+    .heart[data-i]{animation:float var(--dur) linear infinite;opacity:var(--op)}
+    @keyframes float{
+      0%{transform:translate(var(--x,0px),var(--y-start,0px)) rotate(-45deg) scale(var(--s,1));opacity:0}
+      10%{opacity:1}
+      50%{transform:translate(calc(var(--x,0px) + 0px),calc(var(--y-start,0px) - 30vh)) rotate(-45deg) scale(var(--s,1))}
+      90%{opacity:0.6}
+      100%{transform:translate(calc(var(--x,0px)),calc(var(--y-start,0px) - 60vh)) rotate(-45deg) scale(var(--s,1));opacity:0}
+    }
+
+    /* small responsive tweaks */
+    @media (max-width:520px){
+      h1{font-size:20px}
+      .proposal{font-size:18px}
+      .question{font-size:28px}
+    }
+
+    /* confetti-ish burst for the "Sí" */
+    .confetti{position:absolute;pointer-events:none;inset:0;}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="stage" role="main">
+    <div class="card" aria-live="polite">
+      <h1>"A tu lado he aprendido a vivir, y no solo para mí, sino también para ti."</h1>
+      <p class="lead">Como cada día, imagino mi vida contigo llena de amor y felicidad.</p>
+
+      <div class="proposal">¿Te casarías conmigo?</div>
+
+      <div class="btns">
+        <button id="yesBtn" class="primary">Sí, ¡mil veces sí!</button>
+        <button id="noBtn">Necesito pensarlo</button>
+      </div>
+
+      <p style="margin-top:18px;font-size:14px;color:#333;">(Puedes pulsar cualquiera de los botones — es solo una demostración interactiva.)</p>
+    </div>
+
+    <!-- many hearts placed by JS for variety -->
+    <div id="heartsRoot" aria-hidden="true"></div>
+
+    <!-- confetti canvas -->
+    <canvas id="confetti" class="confetti hidden"></canvas>
+  </div>
+
+  <script>
+    // Create multiple heart elements with random positions and animation settings
+    const root = document.getElementById('heartsRoot');
+    const count = 28;
+    for(let i=0;i<count;i++){
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.setAttribute('data-i', i);
+      const vw = Math.random()*100;
+      const x = (vw) + 'vw';
+      const yStart = (100 + Math.random()*20) + 'vh';
+      const dur = (8 + Math.random()*8) + 's';
+      const s = (0.5 + Math.random()*1.2).toFixed(2);
+      const op = (0.6 + Math.random()*0.4).toFixed(2);
+      h.style.setProperty('--x', x);
+      h.style.setProperty('--y-start', yStart);
+      h.style.setProperty('--dur', dur);
+      h.style.setProperty('--s', s);
+      h.style.setProperty('--op', op);
+      // random horizontal offset so hearts are spread
+      h.style.left = vw + 'vw';
+      h.style.top = (100 + Math.random()*20) + 'vh';
+      root.appendChild(h);
+    }
+
+    // Simple confetti burst using canvas when "Sí" is clicked
+    const yes = document.getElementById('yesBtn');
+    const no = document.getElementById('noBtn');
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas(){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function burst(){
+      canvas.classList.remove('hidden');
+      const pieces = [];
+      const colors = ['#e63946','#ffb5c2','#ff7b9c','#f94144'];
+      for(let i=0;i<120;i++){
+        pieces.push({x:window.innerWidth/2 + (Math.random()-0.5)*80, y:window.innerHeight/2 + (Math.random()-0.5)*20, vx:(Math.random()-0.5)*10, vy:(Math.random()-2.5)*10, rot:Math.random()*360, angular:(Math.random()-0.5)*10, color:colors[Math.floor(Math.random()*colors.length)], size:4+Math.random()*8})
+      }
+      let t=0;
+      const anim = setInterval(()=>{
+        t+=1;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p=>{
+          p.x += p.vx; p.y += p.vy; p.vy += 0.35; p.rot += p.angular;
+          ctx.save();
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.rot*Math.PI/180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+          ctx.restore();
+        });
+        if(t>90){ clearInterval(anim); ctx.clearRect(0,0,canvas.width,canvas.height); canvas.classList.add('hidden'); }
+      },16);
+    }
+
+    yes.addEventListener('click', ()=>{
+      burst();
+      yes.textContent = '❤ ¡Sí!' ;
+      yes.disabled = true;
+      no.disabled = true;
+    });
+    no.addEventListener('click', ()=>{
+      no.textContent = 'Pensaré...' ;
+      no.disabled = true;
+      setTimeout(()=>{ no.textContent = 'Necesito pensarlo'; no.disabled=false; }, 2500);
+    });
+  </script>
+</body>
+</html>
